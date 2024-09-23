@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>激活码管理系统使用说明</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            padding-top: 50px;
+        }
+        .container {
+            max-width: 800px;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 30px;
+        }
+        code {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            display: block;
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            padding: 10px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+        .alert-info {
+            background-color: #e3f2fd;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">激活码管理系统使用说明</h1>
+
+        <div class="alert alert-info" role="alert">
+            本文档详细介绍了激活码管理系统的安装、配置和使用方法。请仔细阅读每一部分，以确保系统正确运行。
+        </div>
+
+        <h2>1. 系统概述</h2>
+        <p>激活码管理系统是一个用于生成、验证和管理软件激活码的Web应用。它包括以下主要功能：</p>
+        <ul>
+            <li>管理员后台：用于生成和管理激活码</li>
+            <li>用户激活接口：供软件用户验证激活码</li>
+            <li>安全机制：包括CSRF保护、速率限制等</li>
+        </ul>
+
+        <h2>2. 系统要求</h2>
+        <ul>
+            <li>Web服务器（如Apache、Nginx）</li>
+            <li>PHP 7.0或更高版本</li>
+            <li>MySQL 5.6或更高版本</li>
+            <li>PDO PHP扩展</li>
+        </ul>
+
+        <h2>3. 安装步骤</h2>
+        <ol>
+            <li>
+                <h3>3.1 文件上传</h3>
+                <p>将所有PHP文件上传到您的Web服务器。确保文件结构如下：</p>
+                <pre><code>
+根目录
+├── admin/
+│   ├── index.php
+│   └── login.php
+├── api/
+│   ├── generate_code.php
+│   └── verify.php
+├── config.php
+├── database.sql
+└── 使用说明.html
+                </code></pre>
+            </li>
+            <li>
+                <h3>3.2 数据库设置</h3>
+                <p>创建MySQL数据库，并导入<code>database.sql</code>文件：</p>
+                <code>mysql -u your_username -p your_database_name < /path/to/database.sql</code>
+            </li>
+            <li>
+                <h3>3.3 配置文件</h3>
+                <p>修改<code>config.php</code>文件，填入正确的数据库连接信息：</p>
+                <pre><code>
+$db_host = 'localhost';  // 数据库服务器地址
+$db_name = 'your_database_name';  // 数据库名称
+$db_user = 'your_username';  // 数据库用户名
+$db_pass = 'your_password';  // 数据库密码
+                </code></pre>
+            </li>
+            <li>
+                <h3>3.4 权限设置</h3>
+                <p>确保Web服务器有权限读写所有文件和目录：</p>
+                <code>chmod -R 755 /path/to/your/directory</code>
+                <p>设置错误日志路径（在<code>config.php</code>中），并确保Web服务器对该路径有写入权限。</p>
+            </li>
+        </ol>
+
+        <h2>4. 初始设置</h2>
+        <ol>
+            <li>打开<code>config.php</code>文件。</li>
+            <li>找到并取消注释以下行：
+                <code>// setupAdminAccount('admin', 'your_secure_password');</code>
+            </li>
+            <li>将'admin'和'your_secure_password'替换为您想要的管理员用户名和密码。</li>
+            <li>通过命令行运行config.php文件：
+                <code>php /path/to/your/config.php</code>
+            </li>
+            <li>看到"管理员账户创建成功"的消息后，重新注释该行。</li>
+        </ol>
+
+        <h2>5. 管理员后台使用说明</h2>
+        <h3>5.1 登录</h3>
+        <p>访问<code>admin/login.php</code>页面，输入管理员用户名和密码登录。</p>
+
+        <h3>5.2 生成激活码</h3>
+        <ol>
+            <li>登录后，在管理界面点击"生成激活码"按钮。</li>
+            <li>系统会自动生成一个新的激活码，默认有效期为30天。</li>
+            <li>生成的激活码将显示在页面上，请妥善保存。</li>
+        </ol>
+
+        <h3>5.3 管理激活码</h3>
+        <p>在管理界面，您可以执行以下操作：</p>
+        <ul>
+            <li>查看所有激活码及其状态</li>
+            <li>删除激活码</li>
+            <li>更新激活码的过期时间</li>
+            <li>解绑已使用的激活码</li>
+        </ul>
+
+        <h2>6. 用户激活流程</h2>
+        <p>用户需要在您的软件中实现激活功能，调用<code>api/verify.php</code>接口进行验证。以下是详细的接口说明和调用示例：</p>
+
+        <h3>6.1 激活码验证接口说明</h3>
+        <ul>
+            <li><strong>接口地址：</strong> <code>https://your-server.com/api/verify.php</code></li>
+            <li><strong>请求方法：</strong> POST</li>
+            <li><strong>请求参数：</strong>
+                <ul>
+                    <li>activation_code (string): 64位长度的激活码</li>
+                </ul>
+            </li>
+            <li><strong>响应格式：</strong> JSON</li>
+            <li><strong>响应参数：</strong>
+                <ul>
+                    <li>success (boolean): 表示验证是否成功</li>
+                    <li>message (string): 返回的消息，成功或失败的具体原因</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h4>响应示例：</h4>
+        <p>成功响应：</p>
+        <pre><code>
+{
+    "success": true,
+    "message": "激活成功"
+}
+        </code></pre>
+        <p>失败响应：</p>
+        <pre><code>
+{
+    "success": false,
+    "message": "无效或已过期的激活码"
+}
+        </code></pre>
+
+        <h4>错误码说明：</h4>
+        <ul>
+            <li>200: 请求成功，但激活可能成功或失败，具体看响应内容</li>
+            <li>400: 请求参数错误</li>
+            <li>429: 请求过于频繁，触发速率限制</li>
+            <li>500: 服务器内部错误</li>
+        </ul>
+
+        <h4>注意事项：</h4>
+        <ul>
+            <li>激活码长度必须为64位字符。</li>
+            <li>接口有速率限制，短时间内多次请求可能会被拒绝。</li>
+            <li>每个激活码只能被使用一次，除非被管理员重置。</li>
+            <li>激活码绑定到特定IP，不能在不同IP间转移使用。</li>
+            <li>过期的激活码无法使用。</li>
+        </ul>
+
+        <h3>6.2 接口调用示例</h3>
+
+        <h4>Python 示例：</h4>
+        <pre><code>
+import requests
+
+def verify_activation(activation_code):
+    url = 'https://your-server.com/api/verify.php'
+    data = {'activation_code': activation_code}
+    response = requests.post(url, data=data)
+    result = response.json()
+    
+    if result['success']:
+        print("激活成功:", result['message'])
+        return True
+    else:
+        print("激活失败:", result['message'])
+        return False
+
+# 使用示例
+user_code = input("请输入您的激活码: ")
+if verify_activation(user_code):
+    print("程序已成功激活！")
+else:
+    print("无法激活程序。请联系客户支持。")
+        </code></pre>
+
+        <h4>PHP 示例：</h4>
+        <pre><code>
+&lt;?php
+function verifyActivation($activationCode) {
+    $url = 'https://your-server.com/api/verify.php';
+    $data = array('activation_code' => $activationCode);
+
+    $options = array(
+        'http' => array(
+            'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+            'method'  => 'POST',
+            'content' => http_build_query($data)
+        )
+    );
+    $context  = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    if ($result === FALSE) {
+        return array('success' => false, 'message' => '无法连接到服务器');
+    }
+
+    $response = json_decode($result, true);
+    return $response;
+}
+
+// 使用示例
+$activationCode = 'your_activation_code_here';
+$result = verifyActivation($activationCode);
+if ($result['success']) {
+    echo "激活成功: " . $result['message'];
+} else {
+    echo "激活失败: " . $result['message'];
+}
+        </code></pre>
+
+        <h4>cURL 命令行示例：</h4>
+        <pre><code>
+curl -X POST -d "activation_code=your_activation_code_here" https://your-server.com/api/verify.php
+        </code></pre>
+
+        <div class="alert alert-info" role="alert">
+            <strong>注意：</strong> 请根据实际情况替换 'your-server.com' 和 'your_activation_code_here'。
+        </div>
+
+        <h2>7. 安全特性</h2>
+        <ul>
+            <li>CSRF保护：所有表单提交都使用CSRF令牌进行保护。</li>
+            <li>速率限制：防止API滥用和暴力破解尝试。</li>
+            <li>输入验证：所有用户输入都经过验证和转义，防止SQL注入和XSS攻击。</li>
+            <li>安全的密码存储：使用PHP的password_hash函数进行密码哈希。</li>
+            <li>预处理语句：所有数据库操作都使用PDO预处理语句，进一步防止SQL注入。</li>
+            <li>错误处理：详细的错误日志记录，但不向用户显示敏感信息。</li>
+        </ul>
+
+        <h2>8. 最佳实践和注意事项</h2>
+        <ul>
+            <li>使用HTTPS：确保所有通信都通过HTTPS加密。</li>
+            <li>定期更新密码：建议定期更改管理员密码，使用强密码策略。</li>
+            <li>数据库备份：定期备份数据库，建议每天进行一次完整备份。</li>
+            <li>监控日志：定期检查系统日志，及时发现异常活动。</li>
+            <li>保持更新：及时更新服务器操作系统和所有依赖软件的安全补丁。</li>
+            <li>定期审查：定期审查和更新安全设置，包括速率限制阈值。</li>
+        </ul>
+
+        <h2>9. 故障排除</h2>
+        <h3>9.1 无法登录管理员后台</h3>
+        <ul>
+            <li>检查数据库连接信息是否正确</li>
+            <li>确保管理员账户已正确创建</li>
+            <li>检查PHP错误日志</li>
+        </ul>
+
+        <h3>9.2 生成激活码失败</h3>
+        <ul>
+            <li>检查数据库用户权限</li>
+            <li>确保服务器磁盘空间充足</li>
+            <li>查看PHP和MySQL错误日志</li>
+        </ul>
+
+        <h3>9.3 用户无法激活</h3>
+        <ul>
+            <li>检查服务器防火墙设置</li>
+            <li>验证API接口是否正常工作</li>
+            <li>检查用户提供的激活码格式</li>
+        </ul>
+
+        <h3>9.4 性能问题</h3>
+        <ul>
+            <li>检查数据库索引</li>
+            <li>优化数据库查询</li>
+            <li>考虑使用缓存机制（如Redis）</li>
+        </ul>
+
+        <h2>10. 系统维护</h2>
+        <ul>
+            <li>定期清理过期激活码：
+                <code>DELETE FROM activation_codes WHERE expiration_date < CURRENT_TIMESTAMP;</code>
+            </li>
+            <li>监控数据库性能：
+                <ul>
+                    <li>使用EXPLAIN分析慢查询</li>
+                    <li>定期运行OPTIMIZE TABLE命令</li>
+                </ul>
+            </li>
+            <li>审查访问日志和激活尝试日志</li>
+            <li>定期测试所有系统功能</li>
+        </ul>
+
+        <h2>11. 联系支持</h2>
+        <p>如果您遇到任何问题或需要进一步帮助，请联系系统管理员或技术支持团队。提供以下信息以便快速解决问题：</p>
+        <ul>
+            <li>详细的问题描述</li>
+            <li>问题发生的时间</li>
+            <li>相关的错误消息或日志</li>
+            <li>您已尝试的故障排除步骤</li>
+        </ul>
+
+        <div class="alert alert-info mt-4" role="alert">
+            <strong>注意：</strong> 本文档可能会随系统更新而变化。请定期查看最新版本的使用说明。
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
